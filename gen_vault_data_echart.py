@@ -62,7 +62,8 @@ os.environ['f5_cate']="F5"
 os.environ['file_sep']="."
 
 # combine size with same "date + category"
-shell_cmd = "python vault_list.py msd-staging-log | grep -v audit | awk '{if ($4 != 0.00) print $1, $4, $6}' | awk -F'/' '{print $1, $NF}' | awk -v var1=$f5_cate -v var2=$file_sep '{if($3==var1) print $1, tolower(var1), $2; else { split($4, cate, var2); print $1, cate[1], $2; } }' | awk -v var=$gene_sep '{s[$1 $2] += $3}END{ for(i in s){  print i, s[i] } }' | sort -n -k12 | awk '{print substr($1, 0, 10), substr($1, 11), $2}'"
+# remove noise 'audit' and change category name "beats -> app"
+shell_cmd = "python vault_list.py msd-staging-log | grep -v audit | awk '{if ($4 != 0.00) print $1, $4, $6}' | awk -F'/' '{print $1, $NF}' | awk -v var1=$f5_cate -v var2=$file_sep '{if($3==var1) print $1, tolower(var1), $2; else { split($4, cate, var2); print $1, cate[1], $2; } }' | awk -v var=$gene_sep '{s[$1 $2] += $3}END{ for(i in s){  print i, s[i] } }' | sort -n -k12 | awk '{print substr($1, 0, 10), substr($1, 11), $2}' | sed -e 's#beats#app#g'"
 
 p = subprocess.Popen(shell_cmd, stdout=subprocess.PIPE, shell=True)
 
@@ -90,7 +91,8 @@ table_ts_list_all = []
 
 # gen last_mon days
 dates_last_mon_list = [d.strftime("%Y-%m-%d") for d in date_range(datetime(year_int, month_last_int, 1), datetime(year_int, month_int, day_int), timedelta(days=1))]
-print(dates_last_mon_list)
+print("date\n{}".format(dates_last_mon_list))
+
 final_list_cate = []
 final_dict_cate = collections.OrderedDict.fromkeys(sorted(category_set))
 
