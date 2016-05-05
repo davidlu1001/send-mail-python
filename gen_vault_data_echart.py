@@ -37,6 +37,7 @@ yesterday = (date.today() - timedelta(1)).strftime('%Y%m%d')
 
 year_int = int(datetime.now().strftime('%Y'))
 month_int = int(datetime.now().strftime('%m'))
+day_int = int(datetime.now().strftime('%d'))
 month_last_int = int((datetime.utcnow().replace(day=1) - timedelta(days=1)).strftime("%m"))
 
 month_last_grep = (datetime.utcnow().replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
@@ -45,7 +46,6 @@ os.environ['mon_last']=str(month_last_grep)
 # generate attach file
 # python vault_list.py msd-staging-log | awk '{if ($3 != 0) printf "%10s %10s %8s %2s\n", $1, $3, $4"MB", $6}'
 #shell_cmd_ori = "python vault_list.py msd-staging-log | grep $mon_last | awk '{if ($3 != 0) print $1, $3, $4, $6}'"
-# ????????
 shell_cmd_ori = "python vault_list.py msd-staging-log | awk '{if ($3 != 0) print $1, $3, $4, $6}'"
 attach_file = "vault_upload_size_" + month_last + ".txt"
 fd = open(attach_file, 'w')
@@ -62,7 +62,7 @@ os.environ['f5_cate']="F5"
 os.environ['file_sep']="."
 
 # combine size with same "date + category"
-shell_cmd = "python vault_list.py msd-staging-log | awk '{if ($4 != 0.00) print $1, $4, $6}' | awk -F'/' '{print $1, $NF}' | awk -v var1=$f5_cate -v var2=$file_sep '{if($3==var1) print $1, tolower(var1), $2; else { split($4, cate, var2); print $1, cate[1], $2; } }' | awk -v var=$gene_sep '{s[$1 $2] += $3}END{ for(i in s){  print i, s[i] } }' | sort -n -k12 | awk '{print substr($1, 0, 10), substr($1, 11), $2}'"
+shell_cmd = "python vault_list.py msd-staging-log | grep -v audit | awk '{if ($4 != 0.00) print $1, $4, $6}' | awk -F'/' '{print $1, $NF}' | awk -v var1=$f5_cate -v var2=$file_sep '{if($3==var1) print $1, tolower(var1), $2; else { split($4, cate, var2); print $1, cate[1], $2; } }' | awk -v var=$gene_sep '{s[$1 $2] += $3}END{ for(i in s){  print i, s[i] } }' | sort -n -k12 | awk '{print substr($1, 0, 10), substr($1, 11), $2}'"
 
 p = subprocess.Popen(shell_cmd, stdout=subprocess.PIPE, shell=True)
 
@@ -89,7 +89,7 @@ category_set = sorted(list(set(table_dict['category'])))
 table_ts_list_all = []
 
 # gen last_mon days
-dates_last_mon_list = [d.strftime("%Y-%m-%d") for d in date_range(datetime(year_int, month_last_int, 1), datetime(year_int, month_int, 5), timedelta(days=1))]
+dates_last_mon_list = [d.strftime("%Y-%m-%d") for d in date_range(datetime(year_int, month_last_int, 1), datetime(year_int, month_int, day_int), timedelta(days=1))]
 print(dates_last_mon_list)
 final_list_cate = []
 final_dict_cate = collections.OrderedDict.fromkeys(sorted(category_set))
@@ -115,6 +115,9 @@ for cate in category_set:
     # final_dict_cate[cate] = full_days_dict
     final_dict_cate[cate] = full_days_dict.values()
 
+for cate, size in final_dict_cate.iteritems():
+    print("{}\n{}".format(cate, size))
+
 # Add line for sum based on date
 '''
 [
@@ -123,6 +126,6 @@ for cate in category_set:
 ]
 '''
 
-sum_day = [sum(x) for x in zip(*[x for x in final_dict_cate.values()])]
-final_dict_cate['sum'] = sum_day
-pprint.pprint(final_dict_cate)
+#sum_day = [sum(x) for x in zip(*[x for x in final_dict_cate.values()])]
+#final_dict_cate['sum'] = sum_day
+#pprint.pprint(final_dict_cate)
