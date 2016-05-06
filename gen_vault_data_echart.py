@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pprint
 import collections
+import json
 
 
 def date_range(start, stop, step):
@@ -91,10 +92,13 @@ table_ts_list_all = []
 
 # gen last_mon days
 dates_last_mon_list = [d.strftime("%Y-%m-%d") for d in date_range(datetime(year_int, month_last_int, 1), datetime(year_int, month_int, day_int), timedelta(days=1))]
-print("date\n{}".format(dates_last_mon_list))
+#print("date\n{}".format(dates_last_mon_list))
 
-final_list_cate = []
+
+final_result_return = []
+
 final_dict_cate = collections.OrderedDict.fromkeys(sorted(category_set))
+
 
 for cate in category_set:
     full_days_dict_def = {key_date: 0.00 for key_date in dates_last_mon_list}
@@ -117,8 +121,8 @@ for cate in category_set:
     # final_dict_cate[cate] = full_days_dict
     final_dict_cate[cate] = full_days_dict.values()
 
-for cate, size in final_dict_cate.iteritems():
-    print("{}\n{}".format(cate, size))
+#for cate, size in final_dict_cate.iteritems():
+#    print("{}\n{}".format(cate, size))
 
 # Add line for sum based on date
 '''
@@ -131,3 +135,26 @@ for cate, size in final_dict_cate.iteritems():
 #sum_day = [sum(x) for x in zip(*[x for x in final_dict_cate.values()])]
 #final_dict_cate['sum'] = sum_day
 #pprint.pprint(final_dict_cate)
+
+
+# return json format for replace dashboard.html
+def merge_dicts(*dict_args):
+    '''
+    Given any number of dicts, shallow copy and merge into a new dict,
+    precedence goes to key value pairs in latter dicts.
+    '''
+    result = {}
+    for dictionary in dict_args:
+        result.update(dictionary)
+    return result
+
+final_result_return_dict = {'date': dates_last_mon_list}
+merge_dict = collections.OrderedDict()
+merge_dict = merge_dicts(final_result_return_dict, final_dict_cate)
+json_str = json.dumps(merge_dict)
+
+# add header for js json format
+json_str_add = "data = '" + json_str + "'"
+file_json_data = "/usr/local/var/www/htdocs/data.json"
+with open(file_json_data, 'w') as f:
+    f.write(json_str_add)
