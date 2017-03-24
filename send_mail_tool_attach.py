@@ -15,9 +15,9 @@ import argparse
 
 
 # Define email addresses to use
-addr_to = ['david.lu@example.com', 'others@example.com']
-addr_cc = ['david.lu@example.com', 'others@example.com']
-addr_bcc = 'david.lu@example.com'
+addr_to = ['david.lu@example.com', 'others1@example.com']
+addr_cc = ['david.lu@example.com', 'others2@example.com']
+addr_bcc = ['david.lu@example.com', 'others3@example.com']
 addr_from = 'david.lu@example.com'
 
 # Define SMTP email server details
@@ -90,7 +90,7 @@ def send_mail(html_file, attach_files):
     msg = MIMEMultipart('alternative')
     msg['To'] = ", ".join(addr_to)
     msg['Cc'] = ", ".join(addr_cc)
-    msg['Bcc'] = addr_bcc
+    msg['Bcc'] = ", ".join(addr_bcc)
     msg['From'] = addr_from
     msg['Subject'] = 'Your Report Name - ' + month_last
 
@@ -115,7 +115,7 @@ def send_mail(html_file, attach_files):
     s.starttls()
     s.ehlo()
     s.login(smtp_user, smtp_pass)
-    s.sendmail(addr_from, addr_to, msg.as_string())
+    s.sendmail(addr_from, addr_to + addr_cc + addr_bcc, msg.as_string())
     s.quit()
 
 
